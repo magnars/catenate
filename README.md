@@ -1,7 +1,9 @@
 # catenate
 
-A Ring middleware to concatenate files and add cache busters in
-production, but not in development.
+A Ring middleware that:
+
+ - in production: serves concatenated files with cache buster URLs
+ - in development: serves files individually
 
 In other words, develop with ease, and cache aggressively in production.
 
@@ -14,27 +16,28 @@ In other words, develop with ease, and cache aggressively in production.
 (require '[catenate.core :as catenate])
 
 (-> app
-    (catenate/wrap :production ;; 1
-                   {"lib.js" [["external/jquery.js" #(slurp "http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js")] ;; 2
-                              ["external/angular.js" (slurp "http://ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.js")] ;; 3
-                              ["resources/public/lib/lodash.js" slurp] ;; 4
-                              ["public/lib/moment.js" #(slurp (io/resource %))]] ;; 5
-                    "app.js" (catenate/resources ["public/app/some.js" ;; 6
-                                                  "public/app/cool.js"
-                                                  "public/app/code.js"])
-                    "styles.css" (catenate/files ;; 7
-                                  (distinct ;; 8
-                                   (concat
-                                    ["theme/css/reset.css"
-                                     "theme/css/base.css"]
-                                    (catenate/css-files-in "theme/css"))))})) ;; 9
+    (catenate/wrap
+     :env :production ;; 1
+     :bundles {"lib.js" [["external/jquery.js" #(slurp "http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js")] ;; 2
+                         ["external/angular.js" (slurp "http://ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.js")] ;; 3
+                         ["resources/public/lib/lodash.js" slurp] ;; 4
+                         ["public/lib/moment.js" #(slurp (io/resource %))]] ;; 5
+               "app.js" (catenate/resources ["public/app/some.js" ;; 6
+                                             "public/app/cool.js"
+                                             "public/app/code.js"])
+               "styles.css" (catenate/files ;; 7
+                             (distinct ;; 8
+                              (concat
+                               ["theme/css/reset.css"
+                                "theme/css/base.css"]
+                               (catenate/css-files-in "theme/css"))))})) ;; 9
 ```
 
-1. `:production` means concatenate and add cache busters, while
-   `:development` just passes the files through unscathed. Use your
+1. `:env :production` means concatenate and add cache busters, while
+   `:env :development` just passes the files through unscathed. Use your
    environment variables of choice here.
 
-2. It's a map from package name to a list of tuples. The tuples
+2. `:bundles` is a map from package name to a list of tuples. The tuples
    contain identifiers and a function that returns the contents.
 
 3. Instead of a function, the contents can be returned directly. One
@@ -111,9 +114,13 @@ Heck, there's even some hiccup-specific sugar:
 
  - **Minification?**
 
-   This middleware doesn't concern itself with minification, but since
-   the configuration takes tuples of filenames and content-producing
+   This middleware doesn't concern itself with minification, but there
+   are options:
+
+   - since the configuration takes tuples of filenames and content-producing
    functions, adding minification can be done there.
+
+   - minification can be added as another middleware.
 
  - **Compiling?**
 
