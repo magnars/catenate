@@ -5,62 +5,62 @@ A Ring middleware that:
  - in production: serves concatenated files with cache buster URLs
  - in development: serves files individually
 
-In other words, develop with ease, and cache aggressively in production.
+In other words: Develop with ease. Cache aggressively in production,
+using
+[far future Expires headers](http://developer.yahoo.com/performance/rules.html#expires)
+for your static assets.
 
 ## Usage
 
 ### Set up as middleware
 
 ```cl
-(require '[clojure.java.io :as io])
 (require '[catenate.core :as catenate])
 
-(-> app
-    (catenate/wrap
-     :env :production ;; 1
-     :bundles {"lib.js" [["external/jquery.js" #(slurp "http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js")] ;; 2
-                         ["external/angular.js" (slurp "http://ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.js")] ;; 3
-                         ["resources/public/lib/lodash.js" slurp] ;; 4
-                         ["public/lib/moment.js" #(slurp (io/resource %))]] ;; 5
-               "app.js" (catenate/resources ["public/app/some.js" ;; 6
-                                             "public/app/cool.js"
-                                             "public/app/code.js"])
-               "styles.css" (catenate/files ;; 7
-                             (distinct ;; 8
-                              (concat
-                               ["theme/css/reset.css"
-                                "theme/css/base.css"]
-                               (catenate/css-files-in "theme/css"))))})) ;; 9
+(catenate/wrap
+ :env :production ;; 1
+ :bundles {"lib.js" [(catenate/file "external/jquery.js") ;; 2
+                     (catenate/file "external/angular.js") ;; 3
+                     (catenate/resource "public/libs/moment.js")] ;; 4
+
+           "app.js" (concat (catenate/resources ;; 5
+                             ["public/app/some.js"
+                              "public/app/cool.js"
+                              "public/app/code.js"])
+                            (catenate/files ;; 6
+                             ["scripts/even.js"
+                              "scripts/more.js"]))
+
+           "styles.css" (catenate/distinct-css-files ;; 7
+                         ["theme/css/reset.css"
+                          "theme/css/base.css"
+                          "theme/css/"])})
 ```
 
-1. `:env :production` means concatenate and add cache busters, while
-   `:env :development` just passes the files through unscathed. Use your
-   environment variables of choice here.
+1. `:env :production` concatenates and adds cache busters, while
+   `:env :development` just passes the files through unscathed. Set up
+   properly with environment variables of some kind.
 
-2. `:bundles` is a map from package name to a list of tuples. The tuples
-   contain identifiers and a function that returns the contents.
+2. `:bundles` is a map from bundle name to a list of files. The
+   contents are concatenated together in the order specified in the
+   bundle.
 
-3. Instead of a function, the contents can be returned directly. One
-   use case is fetching external resources only once, even in
-   development mode.
+3. `catenate/file` returns a data structure, and you may inspect it,
+   of course. But this data structure isn't part of the public API
+   before version 1.0.
 
-4. If the function has an arity > 1, the identifier is passed to it.
+4. Bundles can also grab resources on the classpath instead of
+   accessing the file system directly.
 
-5. Using `io/resource` we don't have to access the file system directly.
+5. Using the `catenate/resources` sugar to include many resources in
+   the bundle. Yeah, it's just a `map` of `catenate/resource` over the
+   list. Too sweet?
 
-6. catenate offers some sugar to create a list of tuples for resources.
+6. There's sugar for files too.
 
-7. catenate offers sugar for files too.
-
-8. Let's make sure we get `reset.css` and `base.css` first, but
-   only include them once.
-
-9. Some sugar to list out css-files in a directory, it is equivalent to:
-
-        (->> (io/file "theme/css")
-             .listFiles
-             (map #(.getPath %))
-             (filter #(.endsWith % ".css")))
+7. Some sugar to help us get `reset.css` and `base.css` first, but
+   only include them once when we get the rest of the CSS files in
+   that folder.
 
 ### Using the new URLs
 
@@ -99,18 +99,82 @@ Heck, there's even some hiccup-specific sugar:
   (hiccup.core/html
    [:html
     [:head
-     (catenate.hiccup/link-to "styles.css")]
+     (catenate.hiccup/link-to-css "styles.css")]
     [:body
-     (map catenate.hiccup/link-to ["lib.js" "app.js"])]]))
+     (map catenate.hiccup/link-to-js ["lib.js" "app.js"])]]))
 ```
 
+## So how does this work in development mode?
+
+The identifier in each tuple is used for the URL, prefixed with
+`/catenate/`, so that in this example bundle:
+
+```cl
+{"app.js" (catenate/resources ["public/app/some.js"
+                               "public/app/cool.js"
+                               "public/app/code.js"])}
+```
+
+calling `(get-in request [:catenate :urls "app.js"])` returns
+
+```cl
+["/catenate/public/app/some.js"
+ "/catenate/public/app/cool.js"
+ "/catenate/public/app/code.js"]
+```
+
+and the middleware handles these URLs by returning the given contents.
+
+## What about production mode?
+
+All the contents for each bundle is read at startup. URLs are
+generated from the hash of the contents and the identifier of the
+bundle.
+
+So when you call `(get-in request [:catenate :urls "app.js"])`, it now
+returns:
+
+```cl
+["/catenate/d131dd02c5e6eec4/app.js"]
+```
+
+and the middleware returns the concatenated contents on this URL.
+
+#### What if the contents have changed?
+
+All the contents are read at startup, and then never checked again. To
+read in new contents, the app has to be restarted.
+
+#### No, I mean, what if someone requests an old version of app.js?
+
+With a different hash? Yeah, then they get a 404. In production, you
+should serve the files through [Nginx](http://nginx.org/) or
+[Varnish](https://www.varnish-cache.org/) to avoid this problem while
+doing rolling restarts of app servers.
+
+#### Do I have to have "/catenate/" in front of the URLs in production?
+
+No. Just pass in another `:context-path` to `catenate/wrap`:
+
+```cl
+(catenate/wrap
+     :env :production
+     :context-path "/bundles/")
+```
+
+#### What if I need to share static files with someone else?
+
+Well, they have no way of knowing the cache buster hash, of course. In
+that case you can give them a URL with `latest` in place of the hash:
+
+```cl
+["/catenate/latest/app.js"]
+```
+
+But **you have to make sure these URLs are not served with far future
+expires headers**, or you'll be in trouble when updating.
+
 ## But how about ...
-
- - **Caching?**
-
-   In development, you don't want caching. In production, you serve
-   static files from [Nginx](http://nginx.org/) or
-   [Varnish](https://www.varnish-cache.org/).
 
  - **Minification?**
 
@@ -124,8 +188,17 @@ Heck, there's even some hiccup-specific sugar:
 
  - **Compiling?**
 
-   Maybe you're looking for a full-fledged asset pipeline? This isn't
-   that. Check out [Dieter](https://github.com/edgecase/dieter).
+   You mean like LESS or CoffeeScript? I guess you're looking for a
+   full-fledged asset pipeline. This isn't that. Check out
+   [Dieter](https://github.com/edgecase/dieter).
+
+ - **Relative URLs in CSS?**
+
+   At the moment there is no support for rewriting the CSS to update
+   inline paths, so your CSS `url(...)` declarations need to be
+   absolute. This is certainly a problem I would like to tackle at
+   some point. In fact, this is the reason that the data structure for
+   files is not part of the public API before 1.0.
 
 ## License
 
