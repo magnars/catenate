@@ -31,23 +31,23 @@ for your static assets.
                              ["scripts/even.js"
                               "scripts/more.js"]))
 
-           "styles.css" (catenate/distinct-css-files ;; 7
+           "styles.css" (catenate/distinct-files ;; 7
                          ["theme/css/reset.css"
                           "theme/css/base.css"
-                          "theme/css/"])})
+                          "theme/css/*.css"])})
 ```
 
 1. `:env :production` concatenates and adds cache busters, while
    `:env :development` just passes the files through unscathed. Set up
    properly with environment variables of some kind.
 
-2. `:bundles` is a map from bundle name to a list of files. The
-   contents are concatenated together in the order specified in the
-   bundle.
-
-3. `catenate/file` returns a data structure, and you may inspect it,
+2. `:bundles` is a map from bundle name to a list of files.
+   `catenate/file` returns a data structure, and you may inspect it,
    of course. But this data structure isn't part of the public API
    before version 1.0.
+
+3. The contents are concatenated together in the order specified in the
+   bundle.
 
 4. Bundles can also grab resources on the classpath instead of
    accessing the file system directly.
@@ -58,9 +58,13 @@ for your static assets.
 
 6. There's sugar for files too.
 
-7. Some sugar to help us get `reset.css` and `base.css` first, but
-   only include them once when we get the rest of the CSS files in
-   that folder.
+7. More sugar. It includes `reset.css` and `base.css` first, and then
+   skips over them when we get the rest of the CSS files in that
+   folder.
+
+I'm sorry, but there's no `catenate/distinct-resources`, because
+globbing the classpath doesn't fill me with happy thoughts. If you
+want to tackle that problem, pull requests are welcome.
 
 ### Using the new URLs
 
@@ -151,6 +155,17 @@ With a different hash? Yeah, then they get a 404. In production, you
 should serve the files through [Nginx](http://nginx.org/) or
 [Varnish](https://www.varnish-cache.org/) to avoid this problem while
 doing rolling restarts of app servers.
+
+#### Why not just ignore the hash and return the current contents?
+
+Because then the user might be visiting an old app server with a new
+URL, and suddenly he is caching stale contents. Or worse, your Nginx
+or Varnish cache picks up on it and is now serving out old shit in a
+new wrapping. Not cool.
+
+This of course depends on how your machines are set up, and how you do
+your rolling restarts, but trust me - it's been a major problem with
+some other (to be unnamed) concatenation packages on the JVM.
 
 #### Do I have to have "/catenate/" in front of the URLs in production?
 
