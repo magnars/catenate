@@ -3,7 +3,8 @@
   :url "http://github.com/magnars/catenate"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.4.0"]]
+  :dependencies [[org.clojure/clojure "1.4.0"]
+                 [pandect "0.3.0"]]
   :profiles {:test {:dependencies [[ring/ring-core "1.1.1"]
                                    [hiccup "1.0.2"]
                                    [compojure "1.1.3"]

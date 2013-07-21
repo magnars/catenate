@@ -29,3 +29,14 @@
     :bundles js-bundles)
    {}))
 
+(deftest wrap-adds-unique-urls-to-request-in-production-mode
+  ((catenate/wrap
+    (fn [request]
+      (is (= (get-in request [:catenate :urls "lib.js"])
+             ["/bundles/6c49e36f075925a46c6a9156d65c8c6c9ac9abe8/lib.js"]))
+      (is (= (get-in request [:catenate :urls "app.js"])
+             ["/bundles/67ed01377a858d64581ff4e28712f4e4e47b8b2b/app.js"])))
+    :env :production
+    :context-path "/bundles/"
+    :bundles js-bundles)
+   {}))

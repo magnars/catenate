@@ -1,5 +1,7 @@
 (ns catenate.core
-  (:require [clojure.java.io :as io]))
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [pandect.core]))
 
 (defn- prefixed-path [context-path asset]
   (str context-path (first asset)))
@@ -30,13 +32,36 @@
         (respond-with ((asset-map (:uri request))))
         (app (assoc-in request [:catenate :urls] bundle-urls))))))
 
+;; :env :production
+
+(defn- bundle-contents
+  [assets]
+  (str/join "\n" (map #((second %)) assets)))
+
+(defn- bundle-unique-url
+  [context-path contents name]
+  (str context-path (pandect.core/sha1 contents) "/" name))
+
+(defn- wrap-production
+  [app bundles context-path]
+  (let [contents (map #(bundle-contents %) (vals bundles))
+        names (keys bundles)
+        unique-urls (map (partial bundle-unique-url context-path) contents names)
+        url->contents (zipmap unique-urls contents)
+        bundle-urls (zipmap names (map vector unique-urls))]
+    (fn [request]
+      (if-let [contents (url->contents (:uri request))]
+        (respond-with contents)
+        (app (assoc-in request [:catenate :urls] bundle-urls))))))
+
 ;; public api
 
 (defn wrap
   [app & {:keys [env bundles context-path]}]
   (let [context-path (or context-path "/catenate/")]
     (case env
-      :development (wrap-development app bundles context-path))))
+      :development (wrap-development app bundles context-path)
+      :production (wrap-production app bundles context-path))))
 
 (defn resource
   [path]

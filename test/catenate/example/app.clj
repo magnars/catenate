@@ -32,13 +32,17 @@
   (GET "/hiccup" [:as request] (render-index-w-hiccup request))
   (route/not-found "<h1>Page not found</h1>"))
 
-(def app
+(defn create-app
+  [env]
   (-> app-routes
       (catenate/wrap
-       :env :development
+       :env env
        :bundles {"lib.js" [(catenate/resource "public/some.js")]
                  "app.js" (catenate/resources ["public/cool.js"
                                                "public/code.js"])
                  "styles.css" (catenate/files ["test/files/styles/reset.css"
                                                "test/files/styles/base.css"])})
       (ring.middleware.content-type/wrap-content-type)))
+
+(def app-dev (create-app :development))
+(def app-prod (create-app :production))

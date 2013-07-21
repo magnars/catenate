@@ -3,7 +3,9 @@
             [ring.mock.request :refer [request]]
             [clojure.test :refer [deftest is]]))
 
-(def expected-index-response
+;; development mode
+
+(def expected-index-response-in-dev
   {:status 200
    :headers {"Content-Type" "text/html; charset=utf-8"}
    :body (str "<head>"
@@ -18,21 +20,42 @@
               "</body>")})
 
 (deftest development-mode-index-test
-  (is (= (example/app (request :get "/"))
-         expected-index-response)))
+  (is (= (example/app-dev (request :get "/"))
+         expected-index-response-in-dev)))
 
 (deftest development-mode-index-w-hiccup-test
-  (is (= (example/app (request :get "/hiccup"))
-         expected-index-response)))
+  (is (= (example/app-dev (request :get "/hiccup"))
+         expected-index-response-in-dev)))
 
 (deftest development-mode-single-resource-test
-  (is (= (example/app (request :get "/catenate/public/code.js"))
+  (is (= (example/app-dev (request :get "/catenate/public/code.js"))
          {:status 200
           :headers {"Content-Type" "text/javascript"}
           :body "prompt('code:');"})))
 
 (deftest development-mode-single-file-test
-  (is (= (example/app (request :get "/catenate/test/files/styles/reset.css"))
+  (is (= (example/app-dev (request :get "/catenate/test/files/styles/reset.css"))
          {:status 200
           :headers {"Content-Type" "text/css"}
           :body "html, body { margin: 0; padding: 0; }"})))
+
+;; production mode
+
+(deftest production-mode-index-test
+  (is (= (example/app-prod (request :get "/"))
+         {:status 200
+          :headers {"Content-Type" "text/html; charset=utf-8"}
+          :body (str "<head>"
+                     "<link href=\"/catenate/07d3b468bb7ba285e80bab3912ccd9ec9df4053f/styles.css\" rel=\"stylesheet\" />"
+                     "</head>"
+                     "<body>"
+                     "<h1>Example app</h1>"
+                     "<script src=\"/catenate/6c49e36f075925a46c6a9156d65c8c6c9ac9abe8/lib.js\"></script>"
+                     "<script src=\"/catenate/67ed01377a858d64581ff4e28712f4e4e47b8b2b/app.js\"></script>"
+                     "</body>")})))
+
+(deftest production-mode-bundle-test
+  (is (= (example/app-prod (request :get "/catenate/67ed01377a858d64581ff4e28712f4e4e47b8b2b/app.js"))
+         {:status 200
+          :headers {"Content-Type" "text/javascript"}
+          :body "confirm(\"cool?\");\nprompt('code:');"})))
