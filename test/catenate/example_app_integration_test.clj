@@ -3,7 +3,7 @@
             [ring.mock.request :refer [request]]
             [clojure.test :refer [deftest is]]))
 
-(deftest your-handler-test
+(deftest index-test
   (is (= (example/app (request :get "/"))
          {:status 200
           :headers {"Content-Type" "text/html; charset=utf-8"}
