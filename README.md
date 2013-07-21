@@ -17,24 +17,26 @@ for your static assets.
 ```cl
 (require '[catenate.core :as catenate])
 
-(catenate/wrap
- :env :production ;; 1
- :bundles {"lib.js" [(catenate/file "external/jquery.js") ;; 2
-                     (catenate/file "external/angular.js") ;; 3
-                     (catenate/resource "public/libs/moment.js")] ;; 4
+(-> app
+ (catenate/wrap
+  :env :production ;; 1
+  :bundles {"lib.js" [(catenate/file "external/jquery.js") ;; 2
+                      (catenate/file "external/angular.js") ;; 3
+                      (catenate/resource "public/libs/moment.js")] ;; 4
 
-           "app.js" (concat (catenate/resources ;; 5
-                             ["public/app/some.js"
-                              "public/app/cool.js"
-                              "public/app/code.js"])
-                            (catenate/files ;; 6
-                             ["scripts/even.js"
-                              "scripts/more.js"]))
+            "app.js" (concat (catenate/resources ;; 5
+                              ["public/app/some.js"
+                               "public/app/cool.js"
+                               "public/app/code.js"])
+                             (catenate/files ;; 6
+                              ["scripts/even.js"
+                               "scripts/more.js"]))
 
-           "styles.css" (catenate/distinct-files ;; 7
-                         ["theme/css/reset.css"
-                          "theme/css/base.css"
-                          "theme/css/*.css"])})
+            "styles.css" (catenate/distinct-files ;; 7
+                          ["theme/css/reset.css"
+                           "theme/css/base.css"
+                           "theme/css/*.css"])})
+ (ring.middleware.content-type/wrap-content-type)) ;; 8
 ```
 
 1. `:env :production` concatenates and adds cache busters, while
@@ -62,9 +64,12 @@ for your static assets.
    skips over them when we get the rest of the CSS files in that
    folder.
 
-I'm sorry, but there's no `catenate/distinct-resources`, because
-globbing the classpath doesn't fill me with happy thoughts. If you
-want to tackle that problem, pull requests are welcome.
+   I'm sorry, but there's no `catenate/distinct-resources`, because
+   globbing the classpath doesn't fill me with happy thoughts. If you
+   want to tackle that problem, pull requests are welcome.
+
+8. Since Ring comes with content type middleware, catenate doesn't
+   worry about it. Just make sure to put it after catenate.
 
 ### Using the new URLs
 
