@@ -1,7 +1,7 @@
 (ns catenate.core
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            [pandect.core]))
+            [catenate.digest]))
 
 (defn- prefixed-path [context-path asset]
   (str context-path (first asset)))
@@ -40,7 +40,7 @@
 
 (defn- bundle-unique-url
   [context-path contents name]
-  (str context-path (pandect.core/sha1 contents) "/" name))
+  (str context-path (catenate.digest/sha-1 contents) "/" name))
 
 (defn- bundle-latest-url
   [context-path name]
