@@ -3,20 +3,27 @@
             [ring.mock.request :refer [request]]
             [clojure.test :refer [deftest is]]))
 
+(def expected-index-response
+  {:status 200
+   :headers {"Content-Type" "text/html; charset=utf-8"}
+   :body (str "<head>"
+              "<link href=\"/catenate/test/files/styles/reset.css\" rel=\"stylesheet\" />"
+              "<link href=\"/catenate/test/files/styles/base.css\" rel=\"stylesheet\" />"
+              "</head>"
+              "<body>"
+              "<h1>Example app</h1>"
+              "<script src=\"/catenate/public/some.js\"></script>"
+              "<script src=\"/catenate/public/cool.js\"></script>"
+              "<script src=\"/catenate/public/code.js\"></script>"
+              "</body>")})
+
 (deftest development-mode-index-test
   (is (= (example/app (request :get "/"))
-         {:status 200
-          :headers {"Content-Type" "text/html; charset=utf-8"}
-          :body (str "<head>"
-                     "<link href=\"/catenate/test/files/styles/reset.css\" rel=\"stylesheet\" />"
-                     "<link href=\"/catenate/test/files/styles/base.css\" rel=\"stylesheet\" />"
-                     "</head>"
-                     "<body>"
-                     "<h1>Example app</h1>"
-                     "<script src=\"/catenate/public/some.js\"></script>"
-                     "<script src=\"/catenate/public/cool.js\"></script>"
-                     "<script src=\"/catenate/public/code.js\"></script>"
-                     "</body>")})))
+         expected-index-response)))
+
+(deftest development-mode-index-w-hiccup-test
+  (is (= (example/app (request :get "/hiccup"))
+         expected-index-response)))
 
 (deftest development-mode-single-resource-test
   (is (= (example/app (request :get "/catenate/public/code.js"))

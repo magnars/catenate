@@ -1,5 +1,6 @@
 (ns catenate.example.app
   (:require [catenate.core :as catenate]
+            [catenate.hiccup]
             [compojure.core :refer [GET defroutes]]
             [compojure.route :as route]
             [ring.middleware.content-type]
@@ -7,17 +8,28 @@
 
 (defn render-index
   [request]
+  (str "<head>"
+       (apply str (map #(str "<link href=\"" % "\" rel=\"stylesheet\" />")
+                       (get-in request [:catenate :urls "styles.css"])))
+       "</head>"
+       "<body>"
+       "<h1>Example app</h1>"
+       (apply str (map #(str "<script src=\"" % "\"></script>")
+                       (catenate/urls request ["lib.js" "app.js"])))
+       "</body>"))
+
+(defn render-index-w-hiccup
+  [request]
   (html
    [:head
-    (map (fn [url] [:link {:rel "stylesheet" :href url}])
-         (get-in request [:catenate :urls "styles.css"]))]
+    (catenate.hiccup/link-to-css request ["styles.css"])]
    [:body
     [:h1 "Example app"]
-    (map (fn [url] [:script {:src url}])
-         (catenate/urls request ["lib.js" "app.js"]))]))
+    (catenate.hiccup/link-to-js request ["lib.js" "app.js"])]))
 
 (defroutes app-routes
   (GET "/" [:as request] (render-index request))
+  (GET "/hiccup" [:as request] (render-index-w-hiccup request))
   (route/not-found "<h1>Page not found</h1>"))
 
 (def app

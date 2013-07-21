@@ -108,9 +108,9 @@ Heck, there's even some hiccup-specific sugar:
   (hiccup.core/html
    [:html
     [:head
-     (catenate.hiccup/link-to-css "styles.css")]
+     (catenate.hiccup/link-to-css request ["styles.css"])]
     [:body
-     (map catenate.hiccup/link-to-js ["lib.js" "app.js"])]]))
+     (catenate.hiccup/link-to-js request ["lib.js" "app.js"])]]))
 ```
 
 ## So how does this work in development mode?

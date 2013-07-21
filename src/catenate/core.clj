@@ -51,5 +51,5 @@
 (def files (partial map file))
 
 (defn urls
-  [request urls]
-  (mapcat #(get-in request [:catenate :urls %]) urls))
+  [request bundles]
+  (mapcat #(get-in request [:catenate :urls %]) bundles))
