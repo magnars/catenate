@@ -42,12 +42,18 @@
   [context-path contents name]
   (str context-path (pandect.core/sha1 contents) "/" name))
 
+(defn- bundle-latest-url
+  [context-path name]
+  (str context-path "latest/" name))
+
 (defn- wrap-production
   [app bundles context-path]
   (let [contents (map #(bundle-contents %) (vals bundles))
         names (keys bundles)
         unique-urls (map (partial bundle-unique-url context-path) contents names)
-        url->contents (zipmap unique-urls contents)
+        latest-urls (map (partial bundle-latest-url context-path) names)
+        url->contents (merge (zipmap unique-urls contents)
+                             (zipmap latest-urls contents))
         bundle-urls (zipmap names (map vector unique-urls))]
     (fn [request]
       (if-let [contents (url->contents (:uri request))]

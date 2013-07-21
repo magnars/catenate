@@ -59,3 +59,9 @@
          {:status 200
           :headers {"Content-Type" "text/javascript"}
           :body "confirm(\"cool?\");\nprompt('code:');"})))
+
+(deftest production-mode-latest-test
+  (is (= (example/app-prod (request :get "/catenate/latest/app.js"))
+         {:status 200
+          :headers {"Content-Type" "text/javascript"}
+          :body "confirm(\"cool?\");\nprompt('code:');"})))
