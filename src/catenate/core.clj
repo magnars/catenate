@@ -27,9 +27,9 @@
   [app bundles context-path]
   (let [asset-map (bundles->asset-map bundles context-path)
         bundle-urls (bundles->bundle-urls bundles context-path)]
-    (fn [request]
-      (if (contains? asset-map (:uri request))
-        (respond-with ((asset-map (:uri request))))
+    (fn [{:keys [uri] :as request}]
+      (if (contains? asset-map uri)
+        (respond-with ((asset-map uri)))
         (app (assoc-in request [:catenate :urls] bundle-urls))))))
 
 ;; :env :production
@@ -44,7 +44,7 @@
 
 (defn- wrap-production
   [app bundles context-path]
-  (let [contents (map #(bundle-contents %) (vals bundles))
+  (let [contents (map bundle-contents (vals bundles))
         names (keys bundles)
         unique-urls (map (partial bundle-unique-url context-path) contents names)
         url->contents (zipmap unique-urls contents)
