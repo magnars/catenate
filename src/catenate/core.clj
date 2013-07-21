@@ -8,7 +8,9 @@
   [contents]
   {:status 200 :body contents})
 
-(defn bundles->asset-map
+;; :env :development
+
+(defn- bundles->asset-map
   [bundles context-path]
   (let [all-assets (apply concat (vals bundles))]
     (zipmap (map (partial prefixed-path context-path) all-assets)
@@ -28,14 +30,26 @@
         (respond-with ((asset-map (:uri request))))
         (app (assoc-in request [:catenate :urls] bundle-urls))))))
 
+;; public api
+
 (defn wrap
   [app & {:keys [env bundles context-path]}]
-  (let [env (or env :development)
-        bundles (or bundles {})
-        context-path (or context-path "/catenate/")]
+  (let [context-path (or context-path "/catenate/")]
     (case env
       :development (wrap-development app bundles context-path))))
 
 (defn resource
   [path]
   [path #(slurp (io/resource path))])
+
+(def resources (partial map resource))
+
+(defn file
+  [path]
+  [path #(slurp path)])
+
+(def files (partial map file))
+
+(defn urls
+  [request urls]
+  (mapcat #(get-in request [:catenate :urls %]) urls))
