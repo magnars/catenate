@@ -11,6 +11,7 @@
    :body (str "<head>"
               "<link href=\"/catenate/test/files/styles/reset.css\" rel=\"stylesheet\" />"
               "<link href=\"/catenate/test/files/styles/base.css\" rel=\"stylesheet\" />"
+              "<link href=\"/catenate/test/files/styles/login.css\" rel=\"stylesheet\" />"
               "</head>"
               "<body>"
               "<h1>Example app</h1>"
@@ -46,7 +47,7 @@
          {:status 200
           :headers {"Content-Type" "text/html; charset=utf-8"}
           :body (str "<head>"
-                     "<link href=\"/catenate/07d3b468bb7ba285e80bab3912ccd9ec9df4053f/styles.css\" rel=\"stylesheet\" />"
+                     "<link href=\"/catenate/356e001706e1806abbe5111e85302410dc77cd2a/styles.css\" rel=\"stylesheet\" />"
                      "</head>"
                      "<body>"
                      "<h1>Example app</h1>"

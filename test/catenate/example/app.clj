@@ -40,8 +40,9 @@
        :bundles {"lib.js" [(catenate/resource "public/some.js")]
                  "app.js" (catenate/resources ["public/cool.js"
                                                "public/code.js"])
-                 "styles.css" (catenate/files ["test/files/styles/reset.css"
-                                               "test/files/styles/base.css"])})
+                 "styles.css" (catenate/distinct-files ["test/files/styles/reset.css"
+                                                        "test/files/styles/base.css"
+                                                        "test/files/styles/*.css"])})
       (ring.middleware.content-type/wrap-content-type)))
 
 (def app-dev (create-app :development))

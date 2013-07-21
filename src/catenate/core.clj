@@ -1,7 +1,8 @@
 (ns catenate.core
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            [catenate.digest]))
+            [catenate.digest]
+            [org.satta.glob :as glob]))
 
 (defn- prefixed-path [context-path asset]
   (str context-path (first asset)))
@@ -80,6 +81,19 @@
   [path #(slurp path)])
 
 (def files (partial map file))
+
+(defn- File->file
+  [f]
+  (-> (.getPath f)
+      (subs 2) ;; chop off "./"
+      (file)))
+
+(defn distinct-files
+  [paths]
+  (->> paths
+       (mapcat glob/glob)
+       (distinct)
+       (map File->file)))
 
 (defn urls
   [request bundles]
