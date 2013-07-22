@@ -10,6 +10,10 @@ using
 [far future Expires headers](http://developer.yahoo.com/performance/rules.html#expires)
 for your static assets.
 
+## Install
+
+Add `[catenate "0.1.0"]` to `:dependencies` in your `project.clj`.
+
 ## Usage
 
 ### Set up as middleware
