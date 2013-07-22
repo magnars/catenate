@@ -12,7 +12,7 @@ for your static assets.
 
 ## Install
 
-Add `[catenate "0.1.0"]` to `:dependencies` in your `project.clj`.
+Add `[catenate "0.2.0"]` to `:dependencies` in your `project.clj`.
 
 ## Usage
 
