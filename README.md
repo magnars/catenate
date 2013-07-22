@@ -19,28 +19,29 @@ Add `[catenate "0.1.0"]` to `:dependencies` in your `project.clj`.
 ### Set up as middleware
 
 ```cl
-(require '[catenate.core :as catenate])
+(require '[catenate.core :as catenate :refer [with-prefix]])
 
 (-> app
- (catenate/wrap
-  :env :production ;; 1
-  :bundles {"lib.js" [(catenate/file "external/jquery.js") ;; 2
-                      (catenate/file "external/angular.js") ;; 3
-                      (catenate/resource "public/libs/moment.js")] ;; 4
+    (catenate/wrap
+     :env :production ;; 1
+     :bundles {"lib.js" [(catenate/file "external/jquery.js") ;; 2
+                         (catenate/file "external/angular.js") ;; 3
+                         (catenate/resource "public/libs/moment.js")] ;; 4
 
-            "app.js" (concat (catenate/resources ;; 5
-                              ["public/app/some.js"
-                               "public/app/cool.js"
-                               "public/app/code.js"])
-                             (catenate/files ;; 6
-                              ["scripts/even.js"
-                               "scripts/more.js"]))
+               "app.js" (concat (catenate/resources ;; 5
+                                 ["public/app/some.js"
+                                  "public/app/cool.js"
+                                  "public/app/code.js"])
+                                (catenate/files ;; 6
+                                 (with-prefix "resources/public/app/" ;; 7
+                                   ["even.js"
+                                    "more.js"])))
 
-            "styles.css" (catenate/distinct-files ;; 7
-                          ["theme/css/reset.css"
-                           "theme/css/base.css"
-                           "theme/css/*.css"])})
- (ring.middleware.content-type/wrap-content-type)) ;; 8
+               "styles.css" (catenate/distinct-files ;; 8
+                             ["theme/css/reset.css"
+                              "theme/css/base.css"
+                              "theme/css/*.css"])})
+    (ring.middleware.content-type/wrap-content-type)) ;; 9
 ```
 
 1. `:env :production` concatenates and adds cache busters, while
@@ -64,9 +65,21 @@ Add `[catenate "0.1.0"]` to `:dependencies` in your `project.clj`.
 
 6. There's sugar for files too.
 
-7. More sugar. It includes `reset.css` and `base.css` first, and then
-   skips over them when we get the rest of the CSS files in that
-   folder.
+7. Dry up those paths using `with-prefix`. They can be nested, like:
+
+   ```cl
+   (with-prefix "/app/"
+     (with-prefix "controllers/"
+       ["home-controller.js"
+        "page-controller.js"])
+     (with-prefix "directives/"
+       ["my-directive.js"
+        "your-directive.js"]))
+   ```
+
+8. Glob files with `distinct-files`. It includes `reset.css` and
+   `base.css` first, and then skips over them when we get the rest of
+   the CSS files in that folder.
 
    I'm sorry, but there's no `catenate/distinct-resources`, because
    globbing the classpath doesn't fill me with happy thoughts. If you

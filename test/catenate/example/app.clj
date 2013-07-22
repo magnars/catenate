@@ -1,5 +1,5 @@
 (ns catenate.example.app
-  (:require [catenate.core :as catenate]
+  (:require [catenate.core :as catenate :refer [with-prefix]]
             [catenate.hiccup]
             [compojure.core :refer [GET defroutes]]
             [compojure.route :as route]
@@ -40,9 +40,9 @@
        :bundles {"lib.js" [(catenate/resource "public/some.js")]
                  "app.js" (catenate/resources ["public/cool.js"
                                                "public/code.js"])
-                 "styles.css" (catenate/distinct-files ["test/files/styles/reset.css"
-                                                        "test/files/styles/base.css"
-                                                        "test/files/styles/*.css"])})
+                 "styles.css" (catenate/distinct-files
+                               (with-prefix "test/files/styles/"
+                                 ["reset.css" "base.css" "*.css"]))})
       (ring.middleware.content-type/wrap-content-type)))
 
 (def app-dev (create-app :development))

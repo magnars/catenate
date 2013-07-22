@@ -95,6 +95,11 @@
        (distinct)
        (map File->file)))
 
+(defn with-prefix
+  [prefix & paths]
+  (map (partial str prefix)
+       (apply concat paths)))
+
 (defn urls
   [request bundles]
   (mapcat #(get-in request [:catenate :urls %]) bundles))
