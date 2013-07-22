@@ -1,4 +1,4 @@
-# <img align="right" src="https://raw.github.com/magnars/catenate/master/concatenated.jpg"> catenate
+# <img align="right" src="https://raw.github.com/magnars/catenate/master/concatenated.jpg"> catenate [![Build Status](https://secure.travis-ci.org/magnars/catenate.png)](http://travis-ci.org/magnars/catenate)
 
 A Ring middleware that:
 
