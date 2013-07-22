@@ -130,6 +130,8 @@ Heck, there's even some hiccup-specific sugar:
      (catenate.hiccup/link-to-js request ["lib.js" "app.js"])]]))
 ```
 
+You can see an example app in [test/catenate/example/app.clj](test/catenate/example/app.clj).
+
 ## So how does this work in development mode?
 
 The given file path is used for the URL, prefixed with `/catenate/`,
