@@ -1,4 +1,4 @@
-# catenate
+# <img align="right" src="https://raw.github.com/magnars/catenate/master/concatenated.jpg"> catenate
 
 A Ring middleware that:
 
@@ -115,8 +115,8 @@ Heck, there's even some hiccup-specific sugar:
 
 ## So how does this work in development mode?
 
-The identifier in each tuple is used for the URL, prefixed with
-`/catenate/`, so that in this example bundle:
+The given file path is used for the URL, prefixed with `/catenate/`,
+so that in this example bundle:
 
 ```cl
 {"app.js" (catenate/resources ["public/app/some.js"
@@ -147,7 +147,8 @@ returns:
 ["/catenate/d131dd02c5e6eec4/app.js"]
 ```
 
-and the middleware returns the concatenated contents on this URL.
+and the middleware handles this URL by returning the concatenated
+file contents in the order given by the bundle.
 
 #### What if the contents have changed?
 
@@ -169,8 +170,8 @@ or Varnish cache picks up on it and is now serving out old shit in a
 new wrapping. Not cool.
 
 This of course depends on how your machines are set up, and how you do
-your rolling restarts, but trust me - it's been a major problem with
-some other (to be unnamed) concatenation packages on the JVM.
+your rolling restarts, but it's a source of bugs that are hard to
+track down.
 
 #### Do I have to have "/catenate/" in front of the URLs in production?
 
@@ -198,13 +199,8 @@ expires headers**, or you'll be in trouble when updating.
 
  - **Minification?**
 
-   This middleware doesn't concern itself with minification, but there
-   are options:
-
-   - since the configuration takes tuples of filenames and content-producing
-   functions, adding minification can be done there.
-
-   - minification can be added as another middleware.
+   This middleware doesn't concern itself with minification. If you
+   need it, I suggest using a specialized middleware after this one.
 
  - **Compiling?**
 
