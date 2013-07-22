@@ -24,7 +24,7 @@
       (is (= (get-in request [:catenate :urls "app.js"])
              ["/bundles/public/cool.js"
               "/bundles/public/code.js"])))
-    :env :development
+    :debug true
     :context-path "/bundles/"
     :bundles js-bundles)
    {}))
@@ -36,7 +36,7 @@
              ["/bundles/6c49e36f075925a46c6a9156d65c8c6c9ac9abe8/lib.js"]))
       (is (= (get-in request [:catenate :urls "app.js"])
              ["/bundles/67ed01377a858d64581ff4e28712f4e4e47b8b2b/app.js"])))
-    :env :production
+    :debug false
     :context-path "/bundles/"
     :bundles js-bundles)
    {}))

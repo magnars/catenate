@@ -36,7 +36,7 @@
   [env]
   (-> app-routes
       (catenate/wrap
-       :env env
+       :debug (= :development env)
        :bundles {"lib.js" [(catenate/resource "public/some.js")]
                  "app.js" (catenate/resources ["public/cool.js"
                                                "public/code.js"])

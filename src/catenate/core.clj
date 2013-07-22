@@ -11,7 +11,7 @@
   [contents]
   {:status 200 :body contents})
 
-;; :env :development
+;; :debug true
 
 (defn- bundles->asset-map
   [bundles context-path]
@@ -33,7 +33,7 @@
         (respond-with ((asset-map uri)))
         (app (assoc-in request [:catenate :urls] bundle-urls))))))
 
-;; :env :production
+;; :debug false
 
 (defn- bundle-contents
   [assets]
@@ -64,11 +64,11 @@
 ;; public api
 
 (defn wrap
-  [app & {:keys [env bundles context-path]}]
+  [app & {:keys [debug bundles context-path]}]
   (let [context-path (or context-path "/catenate/")]
-    (case env
-      :development (wrap-development app bundles context-path)
-      :production (wrap-production app bundles context-path))))
+    (if debug
+      (wrap-development app bundles context-path)
+      (wrap-production app bundles context-path))))
 
 (defn resource
   [path]

@@ -23,7 +23,7 @@ Add `[catenate "0.1.0"]` to `:dependencies` in your `project.clj`.
 
 (-> app
     (catenate/wrap
-     :env :production ;; 1
+     :debug false ;; 1
      :bundles {"lib.js" [(catenate/file "external/jquery.js") ;; 2
                          (catenate/file "external/angular.js") ;; 3
                          (catenate/resource "public/libs/moment.js")] ;; 4
@@ -44,9 +44,10 @@ Add `[catenate "0.1.0"]` to `:dependencies` in your `project.clj`.
     (ring.middleware.content-type/wrap-content-type)) ;; 9
 ```
 
-1. `:env :production` concatenates and adds cache busters, while
-   `:env :development` just passes the files through unscathed. Set up
-   properly with environment variables of some kind.
+1. In production mode you set `:debug false`. Files are concatenated
+   and URLs have cache busters. In development you set `:debug true`,
+   and the files passes through unscathed. Set up properly with
+   environment variables of some kind.
 
 2. `:bundles` is a map from bundle name to a list of files.
    `catenate/file` returns a data structure, and you may inspect it,
@@ -198,8 +199,9 @@ No. Just pass in another `:context-path` to `catenate/wrap`:
 
 ```cl
 (catenate/wrap
-     :env :production
-     :context-path "/bundles/")
+     :debug false
+     :context-path "/bundles/"
+     :bundles {...})
 ```
 
 #### What if I need to share static files with someone else?
