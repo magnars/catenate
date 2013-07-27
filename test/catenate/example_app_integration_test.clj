@@ -1,7 +1,7 @@
 (ns catenate.example-app-integration-test
   (:require [catenate.example.app :as example]
             [ring.mock.request :refer [request]]
-            [clojure.test :refer [deftest is]]))
+            [clojure.test :refer [deftest testing is]]))
 
 ;; development mode
 
@@ -9,15 +9,15 @@
   {:status 200
    :headers {"Content-Type" "text/html; charset=utf-8"}
    :body (str "<head>"
-              "<link href=\"/catenate/test/files/styles/reset.css\" rel=\"stylesheet\" />"
-              "<link href=\"/catenate/test/files/styles/base.css\" rel=\"stylesheet\" />"
-              "<link href=\"/catenate/test/files/styles/login.css\" rel=\"stylesheet\" />"
+              "<link href=\"/styles/reset.css\" rel=\"stylesheet\" />"
+              "<link href=\"/styles/base.css\" rel=\"stylesheet\" />"
+              "<link href=\"/styles/login.css\" rel=\"stylesheet\" />"
               "</head>"
               "<body>"
               "<h1>Example app</h1>"
-              "<script src=\"/catenate/public/some.js\"></script>"
-              "<script src=\"/catenate/public/cool.js\"></script>"
-              "<script src=\"/catenate/public/code.js\"></script>"
+              "<script src=\"/scripts/some.js\"></script>"
+              "<script src=\"/scripts/cool.js\"></script>"
+              "<script src=\"/scripts/code.js\"></script>"
               "</body>")})
 
 (deftest development-mode-index-test
@@ -29,40 +29,58 @@
          expected-index-response-in-dev)))
 
 (deftest development-mode-single-resource-test
-  (is (= (example/app-dev (request :get "/catenate/public/code.js"))
+  (is (= (example/app-dev (request :get "/scripts/code.js"))
          {:status 200
           :headers {"Content-Type" "text/javascript"}
           :body "prompt('code:');"})))
 
 (deftest development-mode-single-file-test
-  (is (= (example/app-dev (request :get "/catenate/test/files/styles/reset.css"))
+  (is (= (example/app-dev (request :get "/styles/reset.css"))
          {:status 200
           :headers {"Content-Type" "text/css"}
           :body "html, body { margin: 0; padding: 0; }"})))
 
 ;; production mode
 
-(deftest production-mode-index-test
-  (is (= (example/app-prod (request :get "/"))
-         {:status 200
-          :headers {"Content-Type" "text/html; charset=utf-8"}
-          :body (str "<head>"
-                     "<link href=\"/catenate/356e001706e1806abbe5111e85302410dc77cd2a/styles.css\" rel=\"stylesheet\" />"
-                     "</head>"
-                     "<body>"
-                     "<h1>Example app</h1>"
-                     "<script src=\"/catenate/6c49e36f075925a46c6a9156d65c8c6c9ac9abe8/lib.js\"></script>"
-                     "<script src=\"/catenate/67ed01377a858d64581ff4e28712f4e4e47b8b2b/app.js\"></script>"
-                     "</body>")})))
+(deftest production-mode-test
+  (testing "generation of urls"
+    (is (= (example/app-prod (request :get "/"))
+           {:status 200
+            :headers {"Content-Type" "text/html; charset=utf-8"}
+            :body (str "<head>"
+                       "<link href=\"/bundles/07d3b468bb7ba285e80bab3912ccd9ec9df4053f-styles.css\" rel=\"stylesheet\" />"
+                       "<link href=\"/styles/d8a4e6f45de5689d977757030aa35e4d50b4fef1-login.css\" rel=\"stylesheet\" />"
+                       "</head>"
+                       "<body>"
+                       "<h1>Example app</h1>"
+                       "<script src=\"/bundles/6c49e36f075925a46c6a9156d65c8c6c9ac9abe8-lib.js\"></script>"
+                       "<script src=\"/bundles/67ed01377a858d64581ff4e28712f4e4e47b8b2b-app.js\"></script>"
+                       "</body>")})))
 
-(deftest production-mode-bundle-test
-  (is (= (example/app-prod (request :get "/catenate/67ed01377a858d64581ff4e28712f4e4e47b8b2b/app.js"))
-         {:status 200
-          :headers {"Content-Type" "text/javascript"}
-          :body "confirm(\"cool?\");\nprompt('code:');"})))
+  (testing "getting bundle"
+    (is (= (example/app-prod (request :get "/bundles/67ed01377a858d64581ff4e28712f4e4e47b8b2b-app.js"))
+           {:status 200
+            :headers {"Content-Type" "text/javascript"}
+            :body "confirm(\"cool?\");\nprompt('code:');"})))
 
-(deftest production-mode-latest-test
-  (is (= (example/app-prod (request :get "/catenate/latest/app.js"))
-         {:status 200
-          :headers {"Content-Type" "text/javascript"}
-          :body "confirm(\"cool?\");\nprompt('code:');"})))
+  (testing "getting bundle without cache buster"
+    (is (= (example/app-prod (request :get "/bundles/app.js"))
+           {:status 200
+            :headers {"Content-Type" "text/javascript"}
+            :body "confirm(\"cool?\");\nprompt('code:');"})))
+
+  (testing "bundled files are still available individually"
+    (is (= (example/app-prod (request :get "/scripts/code.js"))
+           {:status 200
+            :headers {"Content-Type" "text/javascript"}
+            :body "prompt('code:');"})))
+
+  (testing "getting extra file (defined outside of bundle)"
+    (is (= (example/app-prod (request :get "/scripts/more.js"))
+           {:status 200
+            :headers {"Content-Type" "text/javascript"}
+            :body "if (1 < 2) {\n  alert('Math still works!');\n}"}))
+    (is (= (example/app-prod (request :get "/styles/d8a4e6f45de5689d977757030aa35e4d50b4fef1-login.css"))
+           {:status 200
+            :headers {"Content-Type" "text/css"}
+            :body ".login { color: red; }\n"}))))

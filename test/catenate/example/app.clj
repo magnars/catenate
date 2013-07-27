@@ -10,39 +10,46 @@
   [request]
   (str "<head>"
        (apply str (map #(str "<link href=\"" % "\" rel=\"stylesheet\" />")
-                       (get-in request [:catenate :urls "styles.css"])))
+                       (catenate/bundle-urls request ["styles.css"])))
+       "<link href=\"" (catenate/file-url request "/styles/login.css") "\" rel=\"stylesheet\" />"
        "</head>"
        "<body>"
        "<h1>Example app</h1>"
        (apply str (map #(str "<script src=\"" % "\"></script>")
-                       (catenate/urls request ["lib.js" "app.js"])))
+                       (catenate/bundle-urls request ["lib.js" "app.js"])))
        "</body>"))
 
 (defn render-index-w-hiccup
   [request]
   (html
    [:head
-    (catenate.hiccup/link-to-css request ["styles.css"])]
+    (catenate.hiccup/link-to-css-bundles request ["styles.css"])
+    (catenate.hiccup/link-to-css-file request "/styles/login.css")]
    [:body
     [:h1 "Example app"]
-    (catenate.hiccup/link-to-js request ["lib.js" "app.js"])]))
+    (catenate.hiccup/link-to-js-bundles request ["lib.js" "app.js"])]))
 
 (defroutes app-routes
   (GET "/" [:as request] (render-index request))
   (GET "/hiccup" [:as request] (render-index-w-hiccup request))
   (route/not-found "<h1>Page not found</h1>"))
 
+(def bundles
+  {"lib.js" ["/scripts/some.js"]
+   "app.js" ["/scripts/cool.js"
+             "/scripts/code.js"]
+   "styles.css" (with-prefix "/styles/"
+                  ["reset.css"
+                   "base.css"])})
+
 (defn create-app
   [env]
   (-> app-routes
       (catenate/wrap
+       :bundles bundles
+       :extra-files ["/styles/login.css" "/scripts/more.js"]
        :debug (= :development env)
-       :bundles {"lib.js" [(catenate/resource "public/some.js")]
-                 "app.js" (catenate/resources ["public/cool.js"
-                                               "public/code.js"])
-                 "styles.css" (catenate/distinct-files
-                               (with-prefix "test/files/styles/"
-                                 ["reset.css" "base.css" "*.css"]))})
+       :public-dir "public")
       (ring.middleware.content-type/wrap-content-type)))
 
 (def app-dev (create-app :development))

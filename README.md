@@ -12,87 +12,56 @@ for your static assets.
 
 ## Install
 
-Add `[catenate "0.2.0"]` to `:dependencies` in your `project.clj`.
+Add `[catenate "0.3.0"]` to `:dependencies` in your `project.clj`.
 
 ## Usage
 
-### Set up as middleware
+Let's start with the most basic setup, the top level abstraction. The
+porcelain, if you will. This should suit most projects:
 
 ```cl
-(require '[catenate.core :as catenate :refer [with-prefix]])
+(def bundles ;; 1
+  {"styles.css" ["/style/reset.css" ;; 2
+                 "/style/main.css"]
+   "lib.js" ["/script/external/jquery.js"
+             "/script/external/angular.js"
+             "/script/global.js"]
+   "app.js" ["/script/some.js"
+             "/script/code.js"]})
 
 (-> app
-    (catenate/wrap
-     :debug false ;; 1
-     :bundles {"lib.js" [(catenate/file "external/jquery.js") ;; 2
-                         (catenate/file "external/angular.js") ;; 3
-                         (catenate/resource "public/libs/moment.js")] ;; 4
-
-               "app.js" (concat (catenate/resources ;; 5
-                                 ["public/app/some.js"
-                                  "public/app/cool.js"
-                                  "public/app/code.js"])
-                                (catenate/files ;; 6
-                                 (with-prefix "resources/public/app/" ;; 7
-                                   ["even.js"
-                                    "more.js"])))
-
-               "styles.css" (catenate/distinct-files ;; 8
-                             ["theme/css/reset.css"
-                              "theme/css/base.css"
-                              "theme/css/*.css"])})
-    (ring.middleware.content-type/wrap-content-type)) ;; 9
+      (catenate/wrap ;; 2
+       :bundles bundles ;; 3
+       :debug true ;; 4
+       :public-dir "public") ;; 5
+      (ring.middleware.content-type/wrap-content-type)) ;; 6
 ```
 
-1. In production mode you set `:debug false`. Files are concatenated
+1. Declare how your files are bundled in a map from bundle name to
+   list of files.
+
+2. The contents are concatenated together in the order specified in the
+   bundle.
+
+3. Add `catenate/wrap` as a Ring middleware.
+
+4. Pass in the bundle map.
+
+5. In production mode you set `:debug false`. Files are concatenated
    and URLs have cache busters. In development you set `:debug true`,
    and the files passes through unscathed. Set up properly with
    environment variables of some kind.
 
-2. `:bundles` is a map from bundle name to a list of files.
-   `catenate/file` returns a data structure, and you may inspect it,
-   of course. But this data structure isn't part of the public API
-   before version 1.0.
+6. The files are served from the `:public-dir` on the classpath
+   (normally in the `resources` directory).
 
-3. The contents are concatenated together in the order specified in the
-   bundle.
-
-4. Bundles can also grab resources on the classpath instead of
-   accessing the file system directly.
-
-5. Using the `catenate/resources` sugar to include many resources in
-   the bundle. Yeah, it's just a `map` of `catenate/resource` over the
-   list. Too sweet?
-
-6. There's sugar for files too.
-
-7. Dry up those paths using `with-prefix`. They can be nested, like:
-
-   ```cl
-   (with-prefix "/app/"
-     (with-prefix "controllers/"
-       ["home-controller.js"
-        "page-controller.js"])
-     (with-prefix "directives/"
-       ["my-directive.js"
-        "your-directive.js"]))
-   ```
-
-8. Glob files with `distinct-files`. It includes `reset.css` and
-   `base.css` first, and then skips over them when we get the rest of
-   the CSS files in that folder.
-
-   I'm sorry, but there's no `catenate/distinct-resources`, because
-   globbing the classpath doesn't fill me with happy thoughts. If you
-   want to tackle that problem, pull requests are welcome.
-
-8. Since Ring comes with content type middleware, catenate doesn't
+7. Since Ring comes with content type middleware, catenate doesn't
    worry about it. Just make sure to put it after catenate.
 
-### Using the new URLs
+#### Using the new URLs
 
-After setting up the middleware, the URLs are added to the request map
-under `:catenate :urls`.
+Since we're rewriting URLs to include cache busters, we need to access
+them through catenate.
 
 See example in hiccup below. Notice that we use `map`, since there is
 likely more than one URL in development mode.
@@ -104,21 +73,13 @@ likely more than one URL in development mode.
    [:html
     [:head
      (map (fn [url] [:link {:rel "stylesheet" :href url}])
-          (get-in request [:catenate :urls "styles.css"]))]
+          (catenate/bundle-urls request ["styles.css"]))]
     [:body
      (map (fn [url] [:script {:src url}])
-          (concat
-           (get-in request [:catenate :urls "lib.js"])
-           (get-in request [:catenate :urls "app.js"])))]]))
+          (catenate/bundle-urls request ["lib.js" "app.js"]))]]))
 ```
 
-There's some sugar for that last `concat`:
-
-```cl
-(catenate/urls request ["lib.js" "app.js"])
-```
-
-Heck, there's even some hiccup-specific sugar:
+There's also some hiccup-specific sugar:
 
 ```cl
 (defn my-page
@@ -126,33 +87,41 @@ Heck, there's even some hiccup-specific sugar:
   (hiccup.core/html
    [:html
     [:head
-     (catenate.hiccup/link-to-css request ["styles.css"])]
+     (catenate.hiccup/link-to-css-bundles request ["styles.css"])]
     [:body
-     (catenate.hiccup/link-to-js request ["lib.js" "app.js"])]]))
+     (catenate.hiccup/link-to-js-bundles request ["lib.js" "app.js"])]]))
 ```
-
-You can see an example app in [test/catenate/example/app.clj](test/catenate/example/app.clj).
 
 ## So how does this work in development mode?
 
-The given file path is used for the URL, prefixed with `/catenate/`,
-so that in this example bundle:
+The given paths are used unchanged. So given this example:
 
 ```cl
-{"app.js" (catenate/resources ["public/app/some.js"
-                               "public/app/cool.js"
-                               "public/app/code.js"])}
+(-> app
+    (catenate/wrap
+     :bundles {"app.js" ["/app/some.js"
+                         "/app/cool.js"
+                         "/app/code.js"]}
+     :debug true
+     :public-dir "public"))
 ```
 
-calling `(get-in request [:catenate :urls "app.js"])` returns
+When you call
 
 ```cl
-["/catenate/public/app/some.js"
- "/catenate/public/app/cool.js"
- "/catenate/public/app/code.js"]
+(catenate/bundle-urls request ["app.js"])
 ```
 
-and the middleware handles these URLs by returning the given contents.
+it returns
+
+```cl
+["/app/some.js"
+ "/app/cool.js"
+ "/app/code.js"]
+```
+
+And those are served from `resources/public/`, or more specifically on
+eg. `public/app/some.js` on the classpath.
 
 ## What about production mode?
 
@@ -160,15 +129,36 @@ All the contents for each bundle is read at startup. URLs are
 generated from the hash of the contents and the identifier of the
 bundle.
 
-So when you call `(get-in request [:catenate :urls "app.js"])`, it now
+So when you call `(catenate/bundle-urls request ["app.js"])`, it now
 returns:
 
 ```cl
-["/catenate/d131dd02c5e6eec4/app.js"]
+["/bundles/d131dd02c5e6eec4-app.js"]
 ```
 
 and the middleware handles this URL by returning the concatenated
 file contents in the order given by the bundle.
+
+#### How do I handle cache busters on images?
+
+CSS files that reference images are rewritten so that they point to
+cache busting URLs.
+
+If you're using static images in your HTML, then you'll add a list of
+these files to the `catenate/wrap` declarations like so:
+
+```cl
+(catenate/wrap
+     :debug false
+     :files ["/images/logo.png"]
+     :bundles {...})
+```
+
+And then grab the cache buster URL like so:
+
+```cl
+(catenate/file-url request "/images/logo.png")
+```
 
 #### What if the contents have changed?
 
@@ -193,49 +183,30 @@ This of course depends on how your machines are set up, and how you do
 your rolling restarts, but it's a source of bugs that are hard to
 track down.
 
-#### Do I have to have "/catenate/" in front of the URLs in production?
-
-No. Just pass in another `:context-path` to `catenate/wrap`:
-
-```cl
-(catenate/wrap
-     :debug false
-     :context-path "/bundles/"
-     :bundles {...})
-```
-
 #### What if I need to share static files with someone else?
 
-Well, they have no way of knowing the cache buster hash, of course. In
-that case you can give them a URL with `latest` in place of the hash:
+Well, they have no way of knowing the cache buster hash, of course.
+Luckily the files are still available on their original URLs.
 
-```cl
-["/catenate/latest/app.js"]
-```
+And when `:debug` is set to `false`, the bundles are also available.
+For instance: `/bundles/d131dd02c5e6eec4-app.js` can also be accessed
+on `/bundles/app.js`.
 
-But **you have to make sure these URLs are not served with far future
-expires headers**, or you'll be in trouble when updating.
+*Please note:* **You have to make sure these URLs are not served with
+far future expires headers**, or you'll be in trouble when updating.
 
 ## But how about ...
 
  - **Minification?**
 
-   This middleware doesn't concern itself with minification. If you
-   need it, I suggest using a specialized middleware after this one.
+   This middleware doesn't concern itself with minification. At least
+   not yet. It is certainly something I'd like to tackle soon.
 
  - **Compiling?**
 
    You mean like LESS or CoffeeScript? I guess you're looking for a
    full-fledged asset pipeline. This isn't that. Check out
    [Dieter](https://github.com/edgecase/dieter).
-
- - **Relative URLs in CSS?**
-
-   At the moment there is no support for rewriting the CSS to update
-   inline paths, so your CSS `url(...)` declarations need to be
-   absolute. This is certainly a problem I would like to tackle at
-   some point. In fact, this is the reason that the data structure for
-   files is not part of the public API before 1.0.
 
 ## License
 
