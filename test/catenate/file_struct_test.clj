@@ -1,7 +1,8 @@
 (ns catenate.file-struct-test
   (:require [catenate.file-struct :as c]
             [clojure.java.io :as io])
-  (:use clojure.test))
+  (:use clojure.test)
+  (:import java.io.FileNotFoundException))
 
 (deftest binary-file-test
   (doseq [file [(c/binary-file "public" "/images/logo.png")
@@ -17,7 +18,7 @@
     (is (= (:url file) "/styles/main.css"))
     (is (= (:original-url file) "/styles/main.css"))
     (is (= (:type file) :css))
-    (is (= ((:get-contents file)) "body {background: url(../images/bg.png);}\n#logo {background: url(../images/logo.png);}\n\n"))))
+    (is (= ((:get-contents file)) "body {background: url(../images/bg.png);}\n#logo {background: url(../images/logo.png);}\n.button {background: url(button.png);}\n\n"))))
 
 (deftest js-file-test
   (doseq [file [(c/js-file "public" "/scripts/code.js")
@@ -26,3 +27,6 @@
     (is (= (:original-url file) "/scripts/code.js"))
     (is (= (:type file) :js))
     (is (= ((:get-contents file)) "prompt('code:');"))))
+
+(deftest throws-on-missing-files
+  (is (thrown? FileNotFoundException (c/file "public" "not-found.png"))))

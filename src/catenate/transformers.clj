@@ -38,9 +38,9 @@
 (defn add-cache-busters [files]
   (map add-cache-buster files))
 
-;; include-files-in-css
+;; add-files-referenced-in-css
 
-(def css-url-re #"url\(([^\)]+)\)")
+(def css-url-re #"url\(['\"]?([^\)]+?)['\"]?\)")
 
 (defn- just-the-path [url]
   (-> url
@@ -62,7 +62,7 @@
 (defn- just-the [type files]
   (filter (comp #{type} :type) files))
 
-(defn include-files-in-css [files]
+(defn add-files-referenced-in-css [files]
   (concat
    files
    (map (partial f/binary-file "public")
@@ -70,7 +70,7 @@
          (set (mapcat paths-in-css (just-the :css files)))
          (set (map :original-url files))))))
 
-;; update-file-paths-in-css
+;; css rewriting
 
 (defn- map-just-the [type files fn]
   (map #(if (= type (:type %)) (fn %) %)
@@ -79,16 +79,23 @@
 (defn- css-url-str [url]
   (str "url(\"" url "\")"))
 
-(defn- update-file-paths-in-css-1 [file orig->curr]
-  (let [css-url (:original-url file)]
-    (str/replace (read-in-contents file)
-                 css-url-re
-                 (fn [[_ url]]
-                   (css-url-str (get orig->curr (combine-paths css-url url) url))))))
+(defn- replace-css-urls [file replacement-fn]
+  (str/replace (read-in-contents file)
+               css-url-re
+               (fn [[_ url]] (css-url-str (replacement-fn file url)))))
+
+(defn- replace-css-urls-in-files [files replacement-fn]
+  (map-just-the :css files
+                (fn [file]
+                  (assoc file :get-contents (partial replace-css-urls file replacement-fn)))))
+
+;; rewrite-file-paths-in-css-to-absolute-urls
+
+(defn rewrite-file-paths-in-css-to-absolute-urls [files]
+  (replace-css-urls-in-files files (fn [file url] (combine-paths (:original-url file) url))))
+
+;; update-file-paths-in-css
 
 (defn update-file-paths-in-css [files]
   (let [orig->curr (into {} (map (juxt :original-url :url) files))]
-    (map-just-the :css files
-                  (fn [file]
-                    (assoc file :get-contents
-                           (partial str (update-file-paths-in-css-1 file orig->curr)))))))
+    (replace-css-urls-in-files files (fn [_ url] (get orig->curr url url)))))

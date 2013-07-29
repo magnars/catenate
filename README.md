@@ -30,11 +30,11 @@ porcelain, if you will. This should suit most projects:
              "/script/code.js"]})
 
 (-> app
-      (catenate/wrap ;; 2
-       :bundles bundles ;; 3
-       :debug true ;; 4
-       :public-dir "public") ;; 5
-      (ring.middleware.content-type/wrap-content-type)) ;; 6
+      (catenate/wrap ;; 3
+       :bundles bundles ;; 4
+       :debug true ;; 5
+       :public-dir "public") ;; 6
+      (ring.middleware.content-type/wrap-content-type)) ;; 7
 ```
 
 1. Declare how your files are bundled in a map from bundle name to
@@ -188,9 +188,9 @@ track down.
 Well, they have no way of knowing the cache buster hash, of course.
 Luckily the files are still available on their original URLs.
 
-And when `:debug` is set to `false`, the bundles are also available.
-For instance: `/bundles/d131dd02c5e6eec4-app.js` can also be accessed
-on `/bundles/app.js`.
+When `:debug` is set to `false`, the bundles are also available. For
+instance: `/bundles/d131dd02c5e6eec4-app.js` can also be accessed on
+`/bundles/app.js`.
 
 *Please note:* **You have to make sure these URLs are not served with
 far future expires headers**, or you'll be in trouble when updating.
@@ -199,8 +199,7 @@ far future expires headers**, or you'll be in trouble when updating.
 
  - **Minification?**
 
-   This middleware doesn't concern itself with minification. At least
-   not yet. It is certainly something I'd like to tackle soon.
+   Not yet. It is certainly something I'd like to tackle soon.
 
  - **Compiling?**
 

@@ -46,12 +46,13 @@
 
 (defn- transform-debug [files]
   (-> files
-      transform/include-files-in-css))
+      transform/add-files-referenced-in-css))
 
 (defn- transform-production [files]
   (-> files
+      transform/rewrite-file-paths-in-css-to-absolute-urls
+      transform/add-files-referenced-in-css
       transform/concatenate-bundles
-      transform/include-files-in-css
       transform/add-cache-busters
       transform/update-file-paths-in-css))
 
