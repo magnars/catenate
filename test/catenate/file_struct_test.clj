@@ -10,7 +10,7 @@
     (is (= (:url file) "/images/logo.png"))
     (is (= (:original-url file) "/images/logo.png"))
     (is (= (:type file) :binary))
-    (is (= ((:get-contents file)) (io/as-file (io/resource "public/images/logo.png"))))))
+    (is (= (slurp ((:get-contents file))) (slurp (io/input-stream (io/resource "public/images/logo.png")))))))
 
 (deftest css-file-test
   (doseq [file [(c/css-file "public" "/styles/main.css")

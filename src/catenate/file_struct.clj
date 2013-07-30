@@ -14,7 +14,7 @@
 
 (defn binary-file [public-dir url]
   (let [resource (existing-resource (str public-dir url))]
-   (file-struct url :binary #(io/as-file resource))))
+   (file-struct url :binary #(io/input-stream resource))))
 
 (defn css-file [public-dir url]
   (let [resource (existing-resource (str public-dir url))]
