@@ -2,17 +2,14 @@
 
 A Ring middleware that:
 
- - in production: serves concatenated files with cache buster URLs
- - in development: serves files individually
+ - in production: serves static files concatenated with cache buster URLs and [far future Expires headers](http://developer.yahoo.com/performance/rules.html#expires)
+ - in development: serves static files individually
 
-In other words: Develop with ease. Cache aggressively in production,
-using
-[far future Expires headers](http://developer.yahoo.com/performance/rules.html#expires)
-for your static assets.
+In other words: Develop with ease. Cache aggressively in production.
 
 ## Install
 
-Add `[catenate "0.3.0"]` to `:dependencies` in your `project.clj`.
+Add `[catenate "0.4.0"]` to `:dependencies` in your `project.clj`.
 
 ## Usage
 

@@ -1,7 +1,8 @@
 (ns catenate.transformers-test
   (:use catenate.transformers
         clojure.test)
-  (:require [clojure.java.io :as io]))
+  (:require [clojure.java.io :as io]
+            [clj-time.core :as time]))
 
 (def files
   [{:url "/scripts/external/jquery.js"
@@ -64,6 +65,13 @@
          (str "body {background: url(\"../images/bg.png\");}\n"
               "#logo {background: url(\"../images/logo.png\");}\n"
               ".button {background: url(\"button.png\");}\n\n"))))
+
+(deftest add-far-future-expires-headers-test
+  (let [now (time/date-time 2013 07 30)]
+   (with-redefs [time/now (fn [] now)]
+     (is (= ((:get-headers (first (add-far-future-expires-headers files))))
+            {"Cache-Control" "max-age=315360000"
+             "Expires" "Fri, 28 Jul 2023 00:00:00 GMT"})))))
 
 (deftest basic-integration-test
   (let [optimized (-> files

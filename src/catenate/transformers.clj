@@ -1,5 +1,7 @@
 (ns catenate.transformers
   (:require [clojure.java.io :as io]
+            [clj-time.core :as time]
+            clj-time.format
             [catenate.digest :as digest]
             [catenate.file-struct :as f]
             [clojure.string :as str]
@@ -37,6 +39,21 @@
 
 (defn add-cache-busters [files]
   (map add-cache-buster files))
+
+;; add-far-future-expires-headers
+
+(def http-date-format
+  (clj-time.format/formatter "EEE, dd MMM yyyy HH:mm:ss 'GMT'"))
+
+(def http-date-formatter (partial clj-time.format/unparse http-date-format))
+
+(defn- far-future-expires-headers [file]
+  {"Cache-Control" "max-age=315360000" ;; 3650 days
+   "Expires" (http-date-formatter (time/plus (time/now)
+                                             (time/days 3650)))})
+
+(defn add-far-future-expires-headers [files]
+  (map #(assoc % :get-headers (partial far-future-expires-headers %)) files))
 
 ;; add-files-referenced-in-css
 

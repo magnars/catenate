@@ -32,16 +32,20 @@
   (mapcat (partial bundle->files public-dir) bundles))
 
 (defn- respond-with
-  [contents]
-  {:status 200 :body contents})
+  [file]
+  {:status 200
+   :body ((:get-contents file))
+   :headers (if-let [get-headers (:get-headers file)]
+              (get-headers)
+              {})})
 
 (defn serve-files
   [app files]
-  (let [original-url->get-contents (into {} (map (juxt :original-url :get-contents) files))
-        url->get-contents (into original-url->get-contents (map (juxt :url :get-contents) files))]
+  (let [original-url->file (into {} (map (juxt :original-url identity) files))
+        url->file (into original-url->file (map (juxt :url identity) files))]
     (fn [request]
-      (if-let [get-contents (url->get-contents (:uri request))]
-        (respond-with (get-contents))
+      (if-let [file (url->file (:uri request))]
+        (respond-with file)
         (app (assoc-in request [:catenate-files] files))))))
 
 (defn- transform-debug [files]
@@ -53,6 +57,7 @@
       transform/rewrite-file-paths-in-css-to-absolute-urls
       transform/add-files-referenced-in-css
       transform/concatenate-bundles
+      transform/add-far-future-expires-headers
       transform/add-cache-busters
       transform/update-file-paths-in-css))
 
