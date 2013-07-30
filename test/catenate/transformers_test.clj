@@ -68,10 +68,10 @@
 
 (deftest add-far-future-expires-headers-test
   (let [now (time/date-time 2013 07 30)]
-   (with-redefs [time/now (fn [] now)]
-     (is (= ((:get-headers (first (add-far-future-expires-headers files))))
-            {"Cache-Control" "max-age=315360000"
-             "Expires" "Fri, 28 Jul 2023 00:00:00 GMT"})))))
+    (with-redefs [time/now (fn [] now)]
+      (is (= ((:get-headers (first (add-far-future-expires-headers files))))
+             {"Cache-Control" "max-age=315360000"
+              "Expires" "Fri, 28 Jul 2023 00:00:00 GMT"})))))
 
 (deftest basic-integration-test
   (let [optimized (-> files

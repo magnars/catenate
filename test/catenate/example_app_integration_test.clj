@@ -1,6 +1,7 @@
 (ns catenate.example-app-integration-test
   (:require [catenate.example.app :as example]
             [ring.mock.request :refer [request]]
+            [clj-time.core :as time]
             [clojure.test :refer [deftest testing is]]))
 
 ;; development mode
@@ -43,9 +44,10 @@
 ;; production mode
 
 (deftest production-mode-test
-  (let [expires "Fri, 28 Jul 2023 00:00:00 GMT"
-        expires-headers {"Cache-Control" "max-age=315360000" "Expires" expires}]
-    (with-redefs [catenate.transformers/http-date-formatter (fn [_] expires)]
+  (let [now (time/date-time 2013 07 30)
+        expires-headers {"Cache-Control" "max-age=315360000"
+                         "Expires" "Fri, 28 Jul 2023 00:00:00 GMT"}]
+    (with-redefs [time/now (fn [] now)]
       (testing "generation of urls"
         (is (= (example/app-prod (request :get "/"))
                {:status 200
