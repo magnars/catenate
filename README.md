@@ -147,7 +147,8 @@ these files to the `catenate/wrap` declarations like so:
 ```cl
 (catenate/wrap
      :debug false
-     :files ["/images/logo.png"]
+     :public-dir "public"
+     :extra-files (catenate/paths->files "public" ["/images/logo.png"])
      :bundles {...})
 ```
 

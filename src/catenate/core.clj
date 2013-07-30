@@ -61,12 +61,14 @@
       transform/add-cache-busters
       transform/update-file-paths-in-css))
 
+(defn paths->files [public-dir file-paths]
+  (map (partial f/file public-dir) file-paths))
+
 (defn wrap
   [app & {:keys [bundles extra-files debug public-dir]}]
   (-> app
       (serve-files
        (let [bundle-files (bundles->files public-dir bundles)
-             extra-files (map (partial f/file public-dir) extra-files)
              all-files (concat bundle-files extra-files)]
          (if debug
            (transform-debug all-files)

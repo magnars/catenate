@@ -1,4 +1,4 @@
-(defproject catenate "0.4.1"
+(defproject catenate "0.5.0"
   :description "A Ring middleware to serve concatenated static files with cache buster URLs in production."
   :url "http://github.com/magnars/catenate"
   :license {:name "Eclipse Public License"

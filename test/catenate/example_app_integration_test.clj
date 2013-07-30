@@ -19,6 +19,7 @@
               "<script src=\"/scripts/some.js\"></script>"
               "<script src=\"/scripts/cool.js\"></script>"
               "<script src=\"/scripts/code.js\"></script>"
+              "<script src=\"/angular-templates.js\"></script>"
               "</body>")})
 
 (deftest development-mode-index-test
@@ -60,6 +61,7 @@
                            "<h1>Example app</h1>"
                            "<script src=\"/bundles/6c49e36f075925a46c6a9156d65c8c6c9ac9abe8-lib.js\"></script>"
                            "<script src=\"/bundles/67ed01377a858d64581ff4e28712f4e4e47b8b2b-app.js\"></script>"
+                           "<script src=\"/2d6ec19d768d26eebd0fc9931937db6519627b05-angular-templates.js\"></script>"
                            "</body>")})))
 
       (testing "getting bundle"

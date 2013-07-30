@@ -15,3 +15,8 @@
   [request bundles]
   (map (fn [url] [:script {:src url}])
        (catenate/bundle-urls request bundles)))
+
+(defn link-to-js-file
+  [request original-url]
+  [:script {:src (catenate/file-url request original-url)}])
+
