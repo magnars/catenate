@@ -22,8 +22,9 @@
        "}]);" ))
 
 (defn create-template-cache
-  [& {:keys [path module public-dir templates]}]
+  [& {:keys [path module public-dir templates bundle]}]
   {:url path
    :original-url path
    :type :js
+   :bundle bundle
    :get-contents #(create-template-cache-js module public-dir templates)})
