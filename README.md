@@ -205,6 +205,34 @@ far future expires headers**, or you'll be in trouble when updating.
    full-fledged asset pipeline. This isn't that. Check out
    [Dieter](https://github.com/edgecase/dieter).
 
+## I heard rumours about support for Angular templates?
+
+Yeah, you can use catenate to serve concatenated Angular.JS templates:
+
+```cl
+(def extra-files
+  [(catenate.angular/create-template-cache
+    :path "/templates/angular.js"
+    :module "myapp"
+    :public-dir "public"
+    :templates ["/angular/templates/home.html"
+                "/angular/templates/create.html"
+                "/angular/templates/update.html"])])
+```
+
+This creates a file `/templates/angular.js` that inlines the templates
+and adds them to the `$templateCache`.
+
+You would link to this script with:
+
+```cl
+(catenate/file-url request "/templates/angular.js")
+```
+
+Or you can add a `:bundle "app.js"` pair to the
+`create-template-cache` call, and the file would be bundled together
+with the rest of the javascript files in `/bundles/app.js`. Nifty.
+
 ## License
 
 Copyright © 2013 Magnar Sveen
