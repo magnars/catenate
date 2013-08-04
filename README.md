@@ -224,14 +224,14 @@ Yeah, you can use catenate to serve concatenated Angular.JS templates:
 This creates a file `/templates/angular.js` that inlines the templates
 and adds them to the `$templateCache`.
 
-You would link to this script with:
+You link to this script with:
 
 ```cl
 (catenate/file-url request "/templates/angular.js")
 ```
 
 Or you can add a `:bundle "app.js"` pair to the
-`create-template-cache` call, and the file would be bundled together
+`create-template-cache` call, and the file will be bundled together
 with the rest of the javascript files in `/bundles/app.js`. Nifty.
 
 ## License
