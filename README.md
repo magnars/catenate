@@ -210,14 +210,15 @@ far future expires headers**, or you'll be in trouble when updating.
 Yeah, you can use catenate to serve concatenated Angular.JS templates:
 
 ```cl
-(def extra-files
-  [(catenate.angular/create-template-cache
-    :path "/templates/angular.js"
-    :module "myapp"
-    :public-dir "public"
-    :templates ["/angular/templates/home.html"
-                "/angular/templates/create.html"
-                "/angular/templates/update.html"])])
+(catenate/wrap
+ :bundles {...}
+ :extra-files [(catenate.angular/create-template-cache
+                :path "/templates/angular.js"
+                :module "myapp"
+                :public-dir "public"
+                :templates ["/angular/templates/home.html"
+                            "/angular/templates/create.html"
+                            "/angular/templates/update.html"])])
 ```
 
 This creates a file `/templates/angular.js` that inlines the templates
