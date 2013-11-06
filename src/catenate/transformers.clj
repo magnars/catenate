@@ -66,9 +66,12 @@
       pathetic/render-path
       pathetic/ensure-trailing-separator))
 
+(defn- remove-url-query [s]
+  (first (str/split s #"[\?#]")))
+
 (defn- combine-paths [original-url relative-url]
   (pathetic/normalize (pathetic/resolve (just-the-path original-url)
-                                        relative-url)))
+                                        (remove-url-query relative-url))))
 
 (defn- paths-in-css [file]
   (->> file

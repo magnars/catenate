@@ -53,6 +53,7 @@
        :bundles bundles
        :extra-files (conj
                      (catenate/paths->files "public" ["/styles/login.css"
+                                                      "/styles/url-with-params.css"
                                                       "/scripts/more.js"])
                      (catenate.angular/create-template-cache
                       :path "/angular-templates.js"
