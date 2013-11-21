@@ -9,7 +9,7 @@ In other words: Develop with ease. Cache aggressively in production.
 
 ## Install
 
-Add `[catenate "0.6.1"]` to `:dependencies` in your `project.clj`.
+Add `[catenate "0.6.2"]` to `:dependencies` in your `project.clj`.
 
 ## Usage
 
