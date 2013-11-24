@@ -37,7 +37,7 @@ This is catenate:
      :public-dir "public"))
 ```
 
-This is optmius:
+This is optimus:
 
 ```cl
 (defn get-assets []
