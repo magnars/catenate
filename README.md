@@ -16,6 +16,10 @@ So, when the API turned out quite different, I figured it would be
 better with a name that isn't so focused on concatenation - and more
 on optimization: [optimus](https://github.com/magnars/optimus).
 
+I do miss the concatenated cats tho:
+
+<img src="https://raw.github.com/magnars/catenate/master/concatenated.jpg">
+
 ### I'm still using catenate, where are the docs?
 
 You can find them in [instructions.md](instructions.md).
